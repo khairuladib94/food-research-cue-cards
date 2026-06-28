@@ -1,13 +1,33 @@
-const slideTimes = [
-  1.5, 2, 1.5, 2, 2, 3, 3, 2, 3, 2, 2, 2, 2, 3, 3, 3.5, 3, 3,
-  2, 2, 2, 2, 2.5, 2.5, 2.5, 2, 2.5, 2, 2, 3.5, 2.5, 3.5, 2.5, 3.5, 2
-].map((minutes) => minutes * 60);
+const sessions = {
+  5: {
+    title: "Introduction to Deep Learning in Food Research",
+    times: [
+      1.5, 2, 1.5, 2, 2, 3, 3, 2, 3, 2, 2, 2, 2, 3, 3, 3.5, 3, 3,
+      2, 2, 2, 2, 2.5, 2.5, 2.5, 2, 2.5, 2, 2, 3.5, 2.5, 3.5, 2.5, 3.5, 2
+    ].map((minutes) => minutes * 60)
+  },
+  6: {
+    title: "Deep Learning Hands-on",
+    times: [1, ...Array(37).fill(2), 3, 5, 2].map((minutes) => minutes * 60)
+  }
+};
+
+function requestedSession() {
+  const fromUrl = new URLSearchParams(window.location.search).get("session");
+  if (sessions[fromUrl]) return Number(fromUrl);
+  const saved = localStorage.getItem("cue-card-session");
+  return sessions[saved] ? Number(saved) : 5;
+}
+
+const initialSession = requestedSession();
+const initialIndex = Number.parseInt(
+  localStorage.getItem(`cue-card-index-${initialSession}`) || "0",
+  10
+);
 
 const state = {
-  index: Math.min(
-    Math.max(Number.parseInt(localStorage.getItem("cue-card-index") || "0", 10), 0),
-    slideTimes.length - 1
-  ),
+  sessionId: initialSession,
+  index: Math.min(Math.max(initialIndex, 0), sessions[initialSession].times.length - 1),
   remaining: 0,
   running: false,
   lastTick: null,
@@ -16,6 +36,10 @@ const state = {
 
 const elements = {
   root: document.documentElement,
+  sessionNumber: document.querySelector("#sessionNumber"),
+  sessionSelect: document.querySelector("#sessionSelect"),
+  downloadLink: document.querySelector("#downloadLink"),
+  planLabel: document.querySelector("#planLabel"),
   cardImage: document.querySelector("#cardImage"),
   cardStage: document.querySelector("#cardStage"),
   slideCounter: document.querySelector("#slideCounter"),
@@ -33,6 +57,10 @@ const elements = {
   fullscreenButton: document.querySelector("#fullscreenButton")
 };
 
+function currentSession() {
+  return sessions[state.sessionId];
+}
+
 function pad(value) {
   return String(value).padStart(2, "0");
 }
@@ -43,7 +71,7 @@ function formatTime(seconds) {
 }
 
 function totalForCurrentSlide() {
-  return slideTimes[state.index];
+  return currentSession().times[state.index];
 }
 
 function updateTimerUI() {
@@ -96,7 +124,7 @@ function tick(now) {
     state.running = false;
     updatePlayButton();
     if (navigator.vibrate) navigator.vibrate([120, 80, 120]);
-    if (elements.autoAdvance.checked && state.index < slideTimes.length - 1) {
+    if (elements.autoAdvance.checked && state.index < currentSession().times.length - 1) {
       window.setTimeout(() => goToSlide(state.index + 1, 1, true), 900);
     }
     return;
@@ -116,25 +144,60 @@ function toggleTimer() {
   if (state.running) scheduleTick();
 }
 
+function updateSessionUI() {
+  const session = currentSession();
+  elements.sessionNumber.textContent = pad(state.sessionId);
+  elements.sessionSelect.value = String(state.sessionId);
+  elements.downloadLink.href = `assets/session-${state.sessionId}/Speaker%20Cue%20Cards.pdf`;
+  elements.downloadLink.setAttribute(
+    "download",
+    `Session ${state.sessionId} - Speaker Cue Cards.pdf`
+  );
+  elements.planLabel.textContent = "85-minute plan · 5-minute buffer";
+  localStorage.setItem("cue-card-session", String(state.sessionId));
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("session", state.sessionId);
+  window.history.replaceState({}, "", url);
+  document.documentElement.dataset.session = state.sessionId;
+}
+
 function updateSlideUI() {
+  const session = currentSession();
   const number = state.index + 1;
-  elements.cardImage.src = `assets/cards/${pad(number)}.webp`;
-  elements.cardImage.alt = `Speaker cue card for slide ${number}`;
-  elements.slideCounter.textContent = `Slide ${pad(number)} / ${slideTimes.length}`;
+  elements.cardImage.src = `assets/session-${state.sessionId}/cards/${pad(number)}.webp`;
+  elements.cardImage.alt = `Session ${state.sessionId} speaker cue card for slide ${number}`;
+  elements.slideCounter.textContent = `Session ${state.sessionId} · Slide ${pad(number)} / ${session.times.length}`;
   elements.previousButton.disabled = state.index === 0;
-  elements.nextButton.disabled = state.index === slideTimes.length - 1;
-  localStorage.setItem("cue-card-index", String(state.index));
-  document.title = `Slide ${number} · Session 5 Cue Cards`;
+  elements.nextButton.disabled = state.index === session.times.length - 1;
+  localStorage.setItem(`cue-card-index-${state.sessionId}`, String(state.index));
+  document.title = `Session ${state.sessionId} · Slide ${number} · Food Research Cue Cards`;
 
   const nextNumber = number + 1;
-  if (nextNumber <= slideTimes.length) {
+  if (nextNumber <= session.times.length) {
     const preload = new Image();
-    preload.src = `assets/cards/${pad(nextNumber)}.webp`;
+    preload.src = `assets/session-${state.sessionId}/cards/${pad(nextNumber)}.webp`;
   }
 }
 
+function switchSession(sessionId) {
+  const nextId = Number(sessionId);
+  if (!sessions[nextId] || nextId === state.sessionId) return;
+  state.running = false;
+  cancelAnimationFrame(state.animationFrame);
+  state.sessionId = nextId;
+  const savedIndex = Number.parseInt(
+    localStorage.getItem(`cue-card-index-${nextId}`) || "0",
+    10
+  );
+  state.index = Math.min(Math.max(savedIndex, 0), currentSession().times.length - 1);
+  updateSessionUI();
+  updateSlideUI();
+  resetTimer(false);
+}
+
 function goToSlide(index, direction, keepRunning = state.running) {
-  if (index < 0 || index >= slideTimes.length || index === state.index) return;
+  if (index < 0 || index >= currentSession().times.length || index === state.index) return;
   const leaveClass = direction > 0 ? "is-leaving-left" : "is-leaving-right";
   const enterClass = direction > 0 ? "is-entering-left" : "is-entering-right";
   elements.cardStage.classList.add(leaveClass);
@@ -157,6 +220,7 @@ function toggleFullscreen() {
   }
 }
 
+elements.sessionSelect.addEventListener("change", (event) => switchSession(event.target.value));
 elements.previousButton.addEventListener("click", () => goToSlide(state.index - 1, -1));
 elements.nextButton.addEventListener("click", () => goToSlide(state.index + 1, 1));
 elements.playButton.addEventListener("click", toggleTimer);
@@ -164,7 +228,7 @@ elements.resetButton.addEventListener("click", () => resetTimer(false));
 elements.fullscreenButton.addEventListener("click", toggleFullscreen);
 
 document.addEventListener("keydown", (event) => {
-  if (event.target.matches("input")) return;
+  if (event.target.matches("input, select")) return;
   if (event.key === "ArrowLeft") {
     event.preventDefault();
     goToSlide(state.index - 1, -1);
@@ -194,6 +258,7 @@ elements.cardStage.addEventListener("touchend", (event) => {
   touchStartX = null;
 }, { passive: true });
 
+updateSessionUI();
 state.remaining = totalForCurrentSlide();
 updateSlideUI();
 updateTimerUI();

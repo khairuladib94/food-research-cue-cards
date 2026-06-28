@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10284a">
-  <meta name="description" content="Timed speaker cue cards for Session 5: Introduction to Deep Learning in Food Research.">
-  <title>Session 5 Cue Cards</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2310284a'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia' font-size='34' font-weight='700' fill='white'%3E05%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Timed speaker cue cards for the Machine Learning and Deep Learning for Food Research workshop.">
+  <title>Food Research Cue Cards</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2310284a'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Georgia' font-size='27' font-weight='700' fill='white'%3EDL%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,9 +15,15 @@
   </div>
 
   <header class="app-header">
-    <div class="session-mark" aria-label="Session 5">
-      <span class="session-number">05</span>
-      <span class="session-label">Food Research<br>Cue Cards</span>
+    <div class="session-mark">
+      <span class="session-number" id="sessionNumber">05</span>
+      <label class="session-picker">
+        <span>Food Research Cue Cards</span>
+        <select id="sessionSelect" aria-label="Choose workshop session">
+          <option value="5">Session 5 · Theory</option>
+          <option value="6">Session 6 · Hands-on</option>
+        </select>
+      </label>
     </div>
 
     <div class="timing" aria-live="polite">
@@ -26,7 +32,7 @@
     </div>
 
     <div class="header-actions">
-      <a class="icon-button download-link" href="assets/Session%205%20-%20Speaker%20Cue%20Cards.pdf" download
+      <a class="icon-button download-link" id="downloadLink" href="assets/session-5/Speaker%20Cue%20Cards.pdf" download
          aria-label="Download the complete cue card PDF" title="Download PDF">
         <span aria-hidden="true">↓</span>
       </a>
@@ -46,13 +52,13 @@
 
       <figure class="card-stage" id="cardStage">
         <div class="card-frame">
-          <img id="cardImage" src="assets/cards/01.webp"
+          <img id="cardImage" src="assets/session-5/cards/01.webp"
                alt="Speaker cue card for slide 1" width="1091" height="772">
           <div class="time-up" id="timeUp" role="status">Time</div>
         </div>
         <figcaption>
           <span id="slideCounter">Slide 01 / 35</span>
-          <span class="total-plan">85-minute plan · 5-minute buffer</span>
+          <span class="total-plan" id="planLabel">85-minute plan · 5-minute buffer</span>
         </figcaption>
       </figure>
 

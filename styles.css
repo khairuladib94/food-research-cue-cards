@@ -95,7 +95,9 @@ a {
   letter-spacing: -0.1em;
 }
 
-.session-label {
+.session-picker {
+  display: grid;
+  gap: 3px;
   padding-left: 12px;
   border-left: 1px solid var(--line);
   color: var(--muted);
@@ -104,6 +106,20 @@ a {
   line-height: 1.25;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+}
+
+.session-picker select {
+  max-width: 180px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .timing {
@@ -427,10 +443,20 @@ label:has(input:focus-visible) {
     padding-inline: 14px;
   }
 
-  .session-label,
+  .session-picker > span,
   .keyboard-hint,
   .download-link {
     display: none;
+  }
+
+  .session-picker {
+    padding-left: 8px;
+    border-left: 0;
+  }
+
+  .session-picker select {
+    width: 112px;
+    font-size: 0.68rem;
   }
 
   .timing {
